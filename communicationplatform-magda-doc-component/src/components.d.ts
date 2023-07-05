@@ -6,56 +6,36 @@
  */
 import { HTMLStencilElement, JSXBase } from "@stencil/core/internal";
 export namespace Components {
-    interface MyComponent {
-        /**
-          * The first name
-         */
-        "first": string;
-        /**
-          * The last name
-         */
-        "last": string;
-        /**
-          * The middle name
-         */
-        "middle": string;
+    interface CommunicationplatformMagdaDoc {
+        "apiurl": string;
+        "columns": string;
     }
 }
 declare global {
-    interface HTMLMyComponentElement extends Components.MyComponent, HTMLStencilElement {
+    interface HTMLCommunicationplatformMagdaDocElement extends Components.CommunicationplatformMagdaDoc, HTMLStencilElement {
     }
-    var HTMLMyComponentElement: {
-        prototype: HTMLMyComponentElement;
-        new (): HTMLMyComponentElement;
+    var HTMLCommunicationplatformMagdaDocElement: {
+        prototype: HTMLCommunicationplatformMagdaDocElement;
+        new (): HTMLCommunicationplatformMagdaDocElement;
     };
     interface HTMLElementTagNameMap {
-        "my-component": HTMLMyComponentElement;
+        "communicationplatform-magda-doc": HTMLCommunicationplatformMagdaDocElement;
     }
 }
 declare namespace LocalJSX {
-    interface MyComponent {
-        /**
-          * The first name
-         */
-        "first"?: string;
-        /**
-          * The last name
-         */
-        "last"?: string;
-        /**
-          * The middle name
-         */
-        "middle"?: string;
+    interface CommunicationplatformMagdaDoc {
+        "apiurl": string;
+        "columns"?: string;
     }
     interface IntrinsicElements {
-        "my-component": MyComponent;
+        "communicationplatform-magda-doc": CommunicationplatformMagdaDoc;
     }
 }
 export { LocalJSX as JSX };
 declare module "@stencil/core" {
     export namespace JSX {
         interface IntrinsicElements {
-            "my-component": LocalJSX.MyComponent & JSXBase.HTMLAttributes<HTMLMyComponentElement>;
+            "communicationplatform-magda-doc": LocalJSX.CommunicationplatformMagdaDoc & JSXBase.HTMLAttributes<HTMLCommunicationplatformMagdaDocElement>;
         }
     }
 }

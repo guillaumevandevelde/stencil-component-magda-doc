@@ -7,8 +7,13 @@
 
     <script type="module" src="/build/communicationplatform-magda-doc-component.esm.js"></script>
     <script nomodule src="/build/communicationplatform-magda-doc-component.js"></script>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Fira+Sans&display=swap');
+      </style>
   </head>
   <body>
-    <my-component first="Stencil" last="'Don't call me a framework' JS"></my-component>
-  </body>
+    <communicationplatform-magda-doc
+    apiurl="https://localhost:5001/dossier/magda-doc-api/v1/communicationplatform"
+    columns='["id","messageId", "status", "eboxIdValue","timestamp"]'
+  />  </body>
 </html>
