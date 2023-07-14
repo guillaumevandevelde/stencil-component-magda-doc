@@ -9,6 +9,8 @@ export namespace Components {
     interface CommunicationplatformTable {
         "apiurl": string;
         "columns": string;
+        "filters": string;
+        "pagesizequeryparameter": string;
     }
 }
 declare global {
@@ -26,6 +28,8 @@ declare namespace LocalJSX {
     interface CommunicationplatformTable {
         "apiurl": string;
         "columns"?: string;
+        "filters"?: string;
+        "pagesizequeryparameter"?: string;
     }
     interface IntrinsicElements {
         "communicationplatform-table": CommunicationplatformTable;
