@@ -9,20 +9,25 @@ export class CommunicationplatformTable {
   @Prop() apiurl!: string;
   @Prop() columns: string;
   @Prop() filters : string;  
+  @Prop() totalparameter : string;
   
-  @Prop() pagesizequeryparameter: string ; 
+  @Prop() limitqueryparameter: string ; 
+  @Prop() offsetqueryparameter: string ;
 
   @State() data: any[] = [];
-  @State() pageSize: number = 10;  
+  @State() limit: number = 10;  
+  @State() offset: number = 0;
 
   @State() currentPage = 1;
   @State() isTyping = false;
 
+  @State() totalItems : number;
+  @State() filtersApplied: Map<string, string> = new Map();
+
 
   private timeout: any;
   private parsedFilters : string[] = [];
-  private filtersApplied: any = {};
-
+  
   constructor() {
     this.parsedFilters = JSON.parse(this.filters);
   }
@@ -33,34 +38,31 @@ export class CommunicationplatformTable {
     await this.fetchData();
   }
 
-  @Watch('pageSize')
-  handlePageSizeChange() {
-    this.currentPage = 1; // Reset current page when pageSize changes
+  @Watch('offset')
+  handlePageSizeChange() {    
     this.fetchData();
   }
 
-  @Watch('currentPage')
-  handleCurrentPageChange() {
-    this.fetchData();
-  }
 
   async fetchData() {
     const url = new URL(this.apiurl);
     const params = new URLSearchParams(url.search);
 
-    for (const column in this.filtersApplied) {
-      if (column !== 'currentFilter' && column !== this.pagesizequeryparameter && column !== 'pageNumber') {
-        params.set(`${column}`, this.filtersApplied[column] || '');
-      }
+    for (const [column, filterValue] of this.filtersApplied) {
+      params.set(column, filterValue || '');
     }
 
-    params.set(this.pagesizequeryparameter, this.pageSize.toString());
+    if(this.limitqueryparameter != null){
+    params.set(this.limitqueryparameter, this.limit.toString());
+    }
+    if (this.offsetqueryparameter != null) {
+      params.set(this.offsetqueryparameter, this.offset.toString());
+    }
 
     url.search = params.toString();
-
     const response = await fetch(url.toString());
     const jsonData = await response.json();    
-
+    this.totalItems = jsonData[this.totalparameter] ?? 1;  
     // Update the data based on the received JSON
     if (Array.isArray(jsonData)) {
       this.data = jsonData.map((item: any) => this.formatTime(item));
@@ -94,6 +96,11 @@ export class CommunicationplatformTable {
       value = value.toString();
     }
 
+    // Convert date values to ISO date strings
+    if (value instanceof Date) {
+      value = value.toISOString().split('T')[0];
+    }
+
     return value || '';
   }
 
@@ -111,39 +118,68 @@ export class CommunicationplatformTable {
     return convertedItem;
   }
 
+  private isTimeColumn(column: string): boolean {
+    return column.toLowerCase().includes('time');
+  }
+
   handleItemsPerPageChange(event: Event) {
     const target = event.target as HTMLSelectElement;
-    this.pageSize = parseInt(target.value);
-    this.currentPage = 1; // Reset current page when items per page change
+    this.limit = parseInt(target.value);
+    this.currentPage = 1;
+    this.offset = 0; // Reset current page when items per page change       
     this.fetchData();
   }
 
-  handleFilterChange(column: string, event: Event) {
+   handleFilterChange(column: string, event: Event) {
     const target = event.target as HTMLInputElement;
-    this.filtersApplied = {    
-      [column]: target.value,
-    };
+    const filterValue = target.value.trim();
 
-    clearTimeout(this.timeout); // Clear the previous timeout
+    if (this.isTimeColumn(column)) {
+      // For "time" columns, use the "min" and "max" attributes of the input
+      const filterType = target.getAttribute('data-filter-type');
+      const filterKey = `${column}${filterType}`;
 
+      if (filterValue === '') {
+        this.filtersApplied.delete(filterKey);
+      } else {
+        this.filtersApplied.set(filterKey, filterValue);
+      }
+    } else {
+      // For other columns, use the regular filter behavior
+      if (filterValue === '') {
+        this.filtersApplied.delete(column);
+      } else {
+        this.filtersApplied.set(column, filterValue);
+      }
+    }
+
+    clearTimeout(this.timeout);
     this.isTyping = true;
 
     this.timeout = setTimeout(() => {
       this.isTyping = false;
-      this.fetchData(); // Trigger search when typing stops
-    }, 500); // Adjust the debounce delay as needed
+      this.fetchData();
+    }, 500);
   }
 
   renderPagination() {
-    const totalPages = Math.ceil(this.data.length / this.pageSize);
+    const totalPages = Math.ceil(this.totalItems / this.limit);
 
     return (
       <div class="pagination">
-        <button disabled={this.currentPage === 1} onClick={() => (this.currentPage = this.currentPage - 1)}>
+        <button disabled={this.currentPage === 1} onClick={() => (
+          this.currentPage = this.currentPage - 1,
+          this.offset = this.offset - this.limit,
+          this.fetchData()          
+          )}>
           Previous
         </button>
         <span class="page-of">{`Page ${this.currentPage} of ${totalPages}`}</span>
-        <button disabled={this.currentPage === totalPages} onClick={() => (this.currentPage = this.currentPage + 1)}>
+        <button disabled={this.currentPage === totalPages} onClick={() => (
+          this.currentPage = this.currentPage + 1,
+          this.offset = this.offset + this.limit,
+          this.fetchData()
+          )}>
           Next
         </button>
       </div>
@@ -151,10 +187,7 @@ export class CommunicationplatformTable {
   }
 
   render() {
-    const parsedColumns = JSON.parse(this.columns);
-    const startIndex = (this.currentPage - 1) * this.pageSize;
-    const endIndex = startIndex + this.pageSize;
-    const currentData = this.data.slice(startIndex, endIndex);
+    const parsedColumns = JSON.parse(this.columns);      
 
     return (
       <Host>
@@ -165,29 +198,50 @@ export class CommunicationplatformTable {
                 {parsedColumns.map((column: string) => <th>{column}</th>)}
               </tr>           
               <tr>
-                {parsedColumns.map((column: string) =>  {
-    
-                  if (this.parsedFilters.includes(column) ) {
-                  return(
-                  <th>
-                    <input
-                      type="text"
-                      id={`filter-${column}`}
-                      placeholder={`Filter ${column}`}
-                      value={this.filters[column] || ''}
-                      onInput={event => this.handleFilterChange(column, event)}
-                    />
-                  </th>)
-                } else {
-                  return <th></th>;
-                }}
-
-                )
-              }
+                {parsedColumns.map((column: string) =>  {    
+                  if (this.isTimeColumn(column)) {
+                    return (
+                      <th>
+                        <input
+                          class= "date-input"
+                          type="date"                          
+                          id={`filter-${column}-start`}
+                          placeholder={`Start Date`}
+                          data-filter-type="Start"
+                          value={this.filtersApplied.get(`${column}Start`) || ''}
+                          onInput={(event) => this.handleFilterChange(column, event)}
+                        />
+                        <input
+                          class= "date-input"
+                          type="date"
+                          id={`filter-${column}-end`}
+                          placeholder={`End Date`}
+                          data-filter-type="End"
+                          value={this.filtersApplied.get(`${column}End`) || ''}
+                          onInput={(event) => this.handleFilterChange(column, event)}
+                        />
+                      </th>
+                    );
+                  } else if (this.parsedFilters.includes(column)) {
+                    return (
+                      <th>
+                        <input
+                          type="text"
+                          id={`filter-${column}`}
+                          placeholder={`Filter ${column}`}
+                          value={this.filtersApplied.get(column) || ''}
+                          onInput={(event) => this.handleFilterChange(column, event)}
+                        />
+                      </th>
+                    );
+                  } else {
+                    return <th></th>;
+                  }
+                })}
               </tr>
             </thead>
             <tbody>
-              {currentData.map((item: any) => (
+              {this.data.map((item: any) => (
                 <tr>
                   {parsedColumns.map((column: string) => (
                     <td>{this.extractValue(item, column)}</td>
@@ -200,10 +254,10 @@ export class CommunicationplatformTable {
         <div class="items-per-page">
           <label htmlFor="itemsPerPage">Items per page:</label>
           <select id="itemsPerPage" onChange={event => this.handleItemsPerPageChange(event)}>
-            <option value="10">10</option>
+            <option value="10">10</option>            
             <option value="50">50</option>
             <option value="100">100</option>
-          </select>
+          </select>       
         </div>
         {this.renderPagination()}
       </Host>

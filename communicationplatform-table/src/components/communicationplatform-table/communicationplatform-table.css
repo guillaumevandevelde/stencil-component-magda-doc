@@ -1,6 +1,6 @@
 :host {
   display: block;
-  font-family: 'Fira Sans', sans-serif;
+  font-family: sans-serif;
 }
 
 .table-container {
@@ -89,6 +89,7 @@ input[type="text"] {
 
 .items-per-page select {
   padding: 5px;
+  margin-right: 5px;
   border: 1px solid #ccc;
   border-radius: 4px;
   font-size: 14px;
@@ -102,6 +103,15 @@ input[type="text"] {
 
 .input-container input[type="text"] {
   flex: 1;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.date-input{  
+  flex: 1;
+  margin-right: 10px;
   padding: 8px;
   border: 1px solid #ccc;
   border-radius: 4px;

@@ -1,6 +1,6 @@
 # communicationplatform-table
 
-
+Generic table build by giving an array of columns 
 
 <!-- Auto Generated Below -->
 

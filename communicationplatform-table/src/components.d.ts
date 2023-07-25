@@ -10,7 +10,9 @@ export namespace Components {
         "apiurl": string;
         "columns": string;
         "filters": string;
-        "pagesizequeryparameter": string;
+        "limitqueryparameter": string;
+        "offsetqueryparameter": string;
+        "totalparameter": string;
     }
 }
 declare global {
@@ -29,7 +31,9 @@ declare namespace LocalJSX {
         "apiurl": string;
         "columns"?: string;
         "filters"?: string;
-        "pagesizequeryparameter"?: string;
+        "limitqueryparameter"?: string;
+        "offsetqueryparameter"?: string;
+        "totalparameter"?: string;
     }
     interface IntrinsicElements {
         "communicationplatform-table": CommunicationplatformTable;
